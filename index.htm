@@ -1658,6 +1658,25 @@ var AN={"0": "l", "1": "r", "2": "l", "3": "r", "4": "l", "5": "l", "6": "r", "7
 var NS="http://www.w3.org/2000/svg",svg=document.getElementById("rc"),ed=document.getElementById("ed");
 var FB='"Roboto Condensed","Arial Narrow",Arial,sans-serif';
 var CH=[{ids:[0,1],m:"r"},{ids:[2,3],m:"r"},{ids:[5,6],m:"r"},{ids:[18,19],m:"c"}];
+
+/* Fare calculation: QAR 25 includes the first 1.8 km.
+   The rate below preserves the original 20.95 km / QAR 58.00 example. */
+var BASE_FARE=25, INCLUDED_KM=1.8, RATE_PER_KM=(58-BASE_FARE)/(20.95-INCLUDED_KM);
+function fareForDistance(distance){
+  var km=Math.max(0,parseFloat(distance)||0);
+  return Math.max(BASE_FARE,BASE_FARE+Math.max(0,km-INCLUDED_KM)*RATE_PER_KM);
+}
+function setText(i,text){
+  var n=node(i);
+  n.dataset.t=text;
+  update(i);
+}
+function updateFareFromDistance(){
+  var fare=fareForDistance(curText(18));
+  var amount=fare.toFixed(2);
+  setText(4,amount+" QR");
+  setText(14,amount);
+}
 function el(n,a){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);return e}
 var meas=el("text",{x:0,y:0,visibility:"hidden"});svg.appendChild(meas);
 function layout(u,text){
@@ -1698,7 +1717,12 @@ function openEd(n){var u=UN[+n.getAttribute("data-i")];cur={u:u,n:n};
   ed.style.left=Math.max(4,Math.min(r.left-6,innerWidth-w-20))+"px";ed.style.top=Math.max(4,r.top-(h-r.height)/2)+"px";
   ed.focus();ed.select();}
 svg.addEventListener("click",function(e){var n=e.target.closest(".u");if(n)openEd(n)});
-ed.addEventListener("input",function(){if(!cur)return;cur.n.dataset.t=ed.value;update(cur.u.id)});
+ed.addEventListener("input",function(){
+  if(!cur)return;
+  cur.n.dataset.t=ed.value;
+  update(cur.u.id);
+  if(cur.u.id===18)updateFareFromDistance();
+});
 ed.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key==="Escape")ed.blur()});
 var ALLOW=Object.keys(GL).filter(function(c){return /^[A-Z0-9]$/.test(c)});
 function newRef(){var id="RCN";while(id.length<11)id+=ALLOW[Math.floor(Math.random()*ALLOW.length)];return id}
